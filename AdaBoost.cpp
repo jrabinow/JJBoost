@@ -142,6 +142,10 @@ void AdaBoost::initializeWeights() {
     
     weights_.resize(sampleTotal_);
     for (int i = 0; i < sampleTotal_; ++i) weights_[i] = initialWeight;
+#ifdef MADABOOST
+    madaboostEvalValues_.resize(sampleTotal_);
+    for (int i = 0; i < sampleTotal_; ++i) madaboostEvalValues_[i] = 1.0;
+#endif
 }
 
 void AdaBoost::sortSampleIndices() {
@@ -325,7 +329,16 @@ void AdaBoost::updateWeight(const AdaBoost::DecisionStump& bestClassifier) {
         int labelInteger;
         if (labels_[sampleIndex]) labelInteger = 1;
         else labelInteger = -1;
+#ifdef MADABOOST
+        madaboostEvalValues_[sampleIndex] *= exp(-1.0*labelInteger*bestClassifier.evaluate(samples_[sampleIndex]));
+        if (madaboostEvalValues_[sampleIndex] < 1){
+            weights_[sampleIndex] = (1.0 / sampleTotal_) * madaboostEvalValues_[sampleIndex];
+        } else {
+            weights_[sampleIndex] = 1.0 / sampleTotal_;
+        }
+#else
         weights_[sampleIndex] *= exp(-1.0*labelInteger*bestClassifier.evaluate(samples_[sampleIndex]));
+#endif
         updatedWeightSum += weights_[sampleIndex];
     }
     
