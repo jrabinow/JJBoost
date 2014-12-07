@@ -28,6 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ADABOOST_H
 #define ADABOOST_H
 
+/* enable algorithms. Comment to disable */
+#define MADABOOST
+
 #include <string>
 #include <vector>
 
@@ -107,6 +110,9 @@ private:
     double weightLabelSum_;
     double positiveWeightSum_;
     double negativeWeightSum_;
+#ifdef MADABOOST
+    std::vector<double> madaboostEvalValues_;
+#endif
 };
 
 #endif
