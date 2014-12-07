@@ -48,7 +48,7 @@ void exitWithUsage() {
     std::cerr << "options:" << std::endl;
     std::cerr << "   -o: output score file" << std::endl;
     std::cerr << "   -v: verbose" << std::endl;
-    
+
     exit(1);
 }
 
@@ -57,12 +57,12 @@ ParameterABPredict parseCommandline(int argc, char* argv[]) {
     parameters.verbose = false;
     parameters.outputScoreFile = false;
     parameters.outputScorelFilename = "";
-    
+
     // Options
     int argIndex;
     for (argIndex = 1; argIndex < argc; ++argIndex) {
         if (argv[argIndex][0] != '-') break;
-        
+
         switch (argv[argIndex][1]) {
             case 'v':
                 parameters.verbose = true;
@@ -81,22 +81,22 @@ ParameterABPredict parseCommandline(int argc, char* argv[]) {
                 break;
         }
     }
-    
+
     // Test data file
     if (argIndex >= argc) exitWithUsage();
     parameters.testDataFilename = argv[argIndex];
-    
+
     // Model file
     ++argIndex;
     if (argIndex >= argc) exitWithUsage();
     parameters.modelFilename = argv[argIndex];
-    
+
     return parameters;
 }
 
 int main(int argc, char* argv[]) {
     ParameterABPredict parameters = parseCommandline(argc, argv);
-    
+
     if (parameters.verbose) {
         std::cerr << std::endl;
         std::cerr << "Test data: " << parameters.testDataFilename << std::endl;
@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
 
     AdaBoost adaBoost;
     adaBoost.readFile(parameters.modelFilename);
-    
+
     std::vector< std::vector<double> > testSamples;
     std::vector<bool> testLabels;
     readSampleDataFile(parameters.testDataFilename, testSamples, testLabels);
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
     int negativeCorrectTotal = 0;
     for (int sampleIndex = 0; sampleIndex < testSampleTotal; ++sampleIndex) {
         double score = adaBoost.predict(testSamples[sampleIndex]);
-        
+
         if (testLabels[sampleIndex]) {
             ++positiveTotal;
             if (score > 0) ++positiveCorrectTotal;
@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
             ++negativeTotal;
             if (score <= 0) ++negativeCorrectTotal;
         }
-        
+
         if (parameters.outputScoreFile) {
             outputScoreStream << score << std::endl;
         }

@@ -48,7 +48,7 @@ void exitWithUsage() {
     std::cerr << "   -t: type of boosting (0:discrete, 1:real, 2:gentle) [default:2]" << std::endl;
     std::cerr << "   -r: the number of rounds [default:100]" << std::endl;
     std::cerr << "   -v: verbose" << std::endl;
-    
+
     exit(1);
 }
 
@@ -57,12 +57,12 @@ ParameterABTrain parseCommandline(int argc, char* argv[]) {
     parameters.verbose = false;
     parameters.boostingType = 2;
     parameters.roundTotal = 100;
-    
+
     // Options
     int argIndex;
     for (argIndex = 1; argIndex < argc; ++argIndex) {
         if (argv[argIndex][0] != '-') break;
-        
+
         switch (argv[argIndex][1]) {
             case 'v':
                 parameters.verbose = true;
@@ -97,22 +97,22 @@ ParameterABTrain parseCommandline(int argc, char* argv[]) {
                 break;
         }
     }
-    
+
     // Training data file
     if (argIndex >= argc) exitWithUsage();
     parameters.trainingDataFilename = argv[argIndex];
-    
+
     // Model file
     ++argIndex;
     if (argIndex >= argc) parameters.outputModelFilename = parameters.trainingDataFilename + ".model";
     else parameters.outputModelFilename = argv[argIndex];
-    
+
     return parameters;
 }
 
 int main(int argc, char* argv[]) {
     ParameterABTrain parameters = parseCommandline(argc, argv);
-    
+
     if (parameters.verbose) {
         std::string boostingTypeName[3] = {"discrete", "real", "gentle"};
         std::cerr << std::endl;
@@ -122,11 +122,11 @@ int main(int argc, char* argv[]) {
         std::cerr << "   #rounds:   " << parameters.roundTotal << std::endl;
         std::cerr << std::endl;
     }
-    
+
     AdaBoost adaBoost;
     adaBoost.setBoostingType(parameters.boostingType);
     adaBoost.setTrainingSamples(parameters.trainingDataFilename);
     adaBoost.train(parameters.roundTotal, parameters.verbose);
-    
+
     adaBoost.writeFile(parameters.outputModelFilename);
 }
