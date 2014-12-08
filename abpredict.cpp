@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <getopt>
 #include "readSampleDataFile.h"
 #include "AdaBoost.h"
 
@@ -59,20 +60,15 @@ ParameterABPredict parseCommandline(int argc, char* argv[]) {
     parameters.outputScorelFilename = "";
 
     // Options
-    int argIndex;
-    for (argIndex = 1; argIndex < argc; ++argIndex) {
-        if (argv[argIndex][0] != '-') break;
-
-        switch (argv[argIndex][1]) {
+    while((c = getopt(argc, argv, "vt:r:")) != EOF) {
+        switch (c) {
             case 'v':
                 parameters.verbose = true;
                 break;
             case 'o':
             {
-                ++argIndex;
-                if (argIndex >= argc) exitWithUsage();
                 parameters.outputScoreFile = true;
-                parameters.outputScorelFilename = argv[argIndex];
+                parameters.outputScorelFilename = optarg;
                 break;
             }
             default:
@@ -83,13 +79,15 @@ ParameterABPredict parseCommandline(int argc, char* argv[]) {
     }
 
     // Test data file
-    if (argIndex >= argc) exitWithUsage();
-    parameters.testDataFilename = argv[argIndex];
+    if (argc - optind <= 1)
+	    exitWithUsage();
+    parameters.testDataFilename = argv[optind];
 
     // Model file
-    ++argIndex;
-    if (argIndex >= argc) exitWithUsage();
-    parameters.modelFilename = argv[argIndex];
+    ++optind;
+    if (argc - optind <= 0)
+ 	exitWithUsage();
+    parameters.modelFilename = argv[optind];
 
     return parameters;
 }
