@@ -29,7 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ADABOOST_H
 
 /* enable algorithms. Comment to disable */
-#define MADABOOST
+//#define MADABOOST
+#define EARLY_TERMINATION
 
 #include <string>
 #include <vector>
