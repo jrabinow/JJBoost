@@ -62,13 +62,11 @@ double AdaBoost::DecisionStump::evaluate(const std::vector<double>& featureVecto
     else return outputSmaller_;
 }
 
-
 void AdaBoost::setBoostingType(const int boostingType) {
     if (boostingType < 0 || boostingType > 2) {
         std::cerr << "error: invalid type of boosting" << std::endl;
         exit(1);
     }
-
     boostingType_ = boostingType;
 }
 

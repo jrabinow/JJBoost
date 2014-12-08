@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 #include <cstdlib>
+#include <getopt>
 #include "AdaBoost.h"
 
 struct ParameterABTrain {
@@ -57,21 +58,17 @@ ParameterABTrain parseCommandline(int argc, char* argv[]) {
     parameters.verbose = false;
     parameters.boostingType = 2;
     parameters.roundTotal = 100;
+    int c;
 
     // Options
-    int argIndex;
-    for (argIndex = 1; argIndex < argc; ++argIndex) {
-        if (argv[argIndex][0] != '-') break;
-
-        switch (argv[argIndex][1]) {
+    while((c = getopt(argc, argv, "vt:r:")) != EOF) {
+        switch (c) {
             case 'v':
                 parameters.verbose = true;
                 break;
             case 't':
             {
-                ++argIndex;
-                if (argIndex >= argc) exitWithUsage();
-                int boostingType = atoi(argv[argIndex]);
+                int boostingType = atoi(optarg);
                 if (boostingType < 0 || boostingType > 2) {
                     std::cerr << "error: invalid type of boosting" << std::endl;
                     exitWithUsage();
@@ -81,9 +78,7 @@ ParameterABTrain parseCommandline(int argc, char* argv[]) {
             }
             case 'r':
             {
-                ++argIndex;
-                if (argIndex >= argc) exitWithUsage();
-                int roundTotal = atoi(argv[argIndex]);
+                int roundTotal = atoi(optarg);
                 if (roundTotal < 0) {
                     std::cerr << "error: negative number of rounds" << std::endl;
                     exitWithUsage();
@@ -92,20 +87,21 @@ ParameterABTrain parseCommandline(int argc, char* argv[]) {
                 break;
             }
             default:
-                std::cerr << "error: undefined option" << std::endl;
+                std::cerr << "error: Undefined option" << std::endl;
                 exitWithUsage();
                 break;
         }
     }
 
     // Training data file
-    if (argIndex >= argc) exitWithUsage();
-    parameters.trainingDataFilename = argv[argIndex];
+    if (argc - optind <= 1)
+	    exitWithUsage();
+    parameters.trainingDataFilename = argv[optind];
 
     // Model file
-    ++argIndex;
-    if (argIndex >= argc) parameters.outputModelFilename = parameters.trainingDataFilename + ".model";
-    else parameters.outputModelFilename = argv[argIndex];
+    ++optind;
+    if (argc - optind <= 0) parameters.outputModelFilename = parameters.trainingDataFilename + ".model";
+    else parameters.outputModelFilename = argv[optind];
 
     return parameters;
 }
