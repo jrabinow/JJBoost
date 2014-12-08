@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include <getopt>
+#include <getopt.h>
 #include "readSampleDataFile.h"
 #include "AdaBoost.h"
 
@@ -54,13 +54,14 @@ void exitWithUsage() {
 }
 
 ParameterABPredict parseCommandline(int argc, char* argv[]) {
+    int c;
     ParameterABPredict parameters;
     parameters.verbose = false;
     parameters.outputScoreFile = false;
     parameters.outputScorelFilename = "";
 
     // Options
-    while((c = getopt(argc, argv, "vt:r:")) != EOF) {
+    while((c = getopt(argc, argv, "vt:r:")) != -1) {
         switch (c) {
             case 'v':
                 parameters.verbose = true;
