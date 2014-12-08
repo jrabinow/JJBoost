@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* enable algorithms. Comment to disable */
 #define MADABOOST
-
+//#define FEATURE2
 #include <string>
 #include <vector>
 
@@ -86,6 +86,8 @@ private:
                                   const double weightLabelSumLarger,
                                   const double positiveWeightSumLarger,
                                   const double negativeWeightSumLarger,
+                                  const double positiveWeightSumLargerRev,
+                                  const double negativeWightSumLargerRev,
                                   double& outputLarger,
                                   double& outputSmaller) const;
     double computeError(const double positiveWeightSumLarger,
@@ -110,6 +112,10 @@ private:
     double weightLabelSum_;
     double positiveWeightSum_;
     double negativeWeightSum_;
+
+    //Other
+    std::vector<double> rev_distr_;
+
 #ifdef MADABOOST
     std::vector<double> madaboostEvalValues_;
 #endif

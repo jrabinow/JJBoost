@@ -64,7 +64,7 @@ double AdaBoost::DecisionStump::evaluate(const std::vector<double>& featureVecto
 
 
 void AdaBoost::setBoostingType(const int boostingType) {
-    if (boostingType < 0 || boostingType > 2) {
+    if (boostingType < 0) {
         std::cerr << "error: invalid type of boosting" << std::endl;
         exit(1);
     }
@@ -89,7 +89,6 @@ void AdaBoost::setTrainingSamples(const std::string& trainingDataFilename) {
 void AdaBoost::train(const int roundTotal, const bool verbose) {
     for (int roundCount = 0; roundCount < roundTotal; ++roundCount) {
         trainRound();
-        
         if (verbose) {
             std::cout << "Round " << roundCount << ": " << std::endl;
             std::cout << "feature = " << weakClassifiers_[roundCount].featureIndex() << ", ";
@@ -142,6 +141,10 @@ void AdaBoost::initializeWeights() {
     
     weights_.resize(sampleTotal_);
     for (int i = 0; i < sampleTotal_; ++i) weights_[i] = initialWeight;
+
+    rev_distr_.resize(sampleTotal_);
+    for (int i = 0; i < sampleTotal_; ++i) rev_distr_[i] = 1.0/initialWeight;
+
 #ifdef MADABOOST
     madaboostEvalValues_.resize(sampleTotal_);
     for (int i = 0; i < sampleTotal_; ++i) madaboostEvalValues_[i] = 1.0;
@@ -208,13 +211,22 @@ AdaBoost::DecisionStump AdaBoost::learnOptimalClassifier(const int featureIndex)
     double weightLabelSumLarger = weightLabelSum_;
     double positiveWeightSumLarger = positiveWeightSum_;
     double negativeWeightSumLarger = negativeWeightSum_;
-    
+    double positiveWeightSumLargerRev = positiveWeightSum_;
+    double negativeWeightSumLargerRev = negativeWeightSum_;
+
+    double rev_distrSum = 0;
+    for (int i = 0; i < sampleTotal_; ++i) {
+        rev_distrSum += rev_distr_[i];
+    }
+
     DecisionStump optimalClassifier;
     for (int sortIndex = 0; sortIndex < sampleTotal_ - 1; ++sortIndex) {
         int sampleIndex = sortedSampleIndices_[featureIndex][sortIndex];
         double threshold = samples_[sampleIndex][featureIndex];
-        
         double sampleWeight = weights_[sampleIndex];
+        double rev_distr = rev_distr_[sampleIndex]/rev_distrSum;
+
+
         weightSumLarger -= sampleWeight;
         if (labels_[sampleIndex]) {
             weightLabelSumLarger -= sampleWeight;
@@ -231,24 +243,31 @@ AdaBoost::DecisionStump AdaBoost::learnOptimalClassifier(const int featureIndex)
             sampleIndex = sortedSampleIndices_[featureIndex][sortIndex];
             sampleWeight = weights_[sampleIndex];
             weightSumLarger -= sampleWeight;
+
             if (labels_[sampleIndex]) {
                 weightLabelSumLarger -= sampleWeight;
                 positiveWeightSumLarger -= sampleWeight;
+                positiveWeightSumLargerRev = positiveWeightSumLarger * rev_distr;
             } else {
                 weightLabelSumLarger += sampleWeight;
                 negativeWeightSumLarger -= sampleWeight;
+                negativeWeightSumLargerRev = negativeWeightSumLarger * rev_distr;
+            
             }
+
+
         }
         if (sortIndex >= sampleTotal_ - 1) break;
         
         if (fabs(weightSumLarger) < epsilonValue || fabs(weightSum_ - weightSumLarger) < epsilonValue) continue;
-        
+
         double outputLarger, outputSmaller;
         computeClassifierOutputs(weightSumLarger, weightLabelSumLarger, positiveWeightSumLarger, negativeWeightSumLarger,
-                                 outputLarger, outputSmaller);
+                                 positiveWeightSumLargerRev, negativeWeightSumLargerRev, outputLarger, outputSmaller);
         
         double error = computeError(positiveWeightSumLarger, negativeWeightSumLarger, outputLarger, outputSmaller);
         
+
         if (optimalClassifier.error() < 0 || error < optimalClassifier.error()) {
             double classifierThreshold = (threshold + samples_[sortedSampleIndices_[featureIndex][sortIndex + 1]][featureIndex])/2.0;
             
@@ -269,6 +288,8 @@ void AdaBoost::computeClassifierOutputs(const double weightSumLarger,
                                         const double weightLabelSumLarger,
                                         const double positiveWeightSumLarger,
                                         const double negativeWeightSumLarger,
+                                        const double positiveWeightSumLargerRev,
+                                        const double negativeWeightSumLargerRev,
                                         double &outputLarger,
                                         double &outputSmaller) const
 {
@@ -285,9 +306,16 @@ void AdaBoost::computeClassifierOutputs(const double weightSumLarger,
         // Real AdaBoost
         const double epsilonReal = 0.0001;
         outputLarger = log((positiveWeightSumLarger + epsilonReal)/(negativeWeightSumLarger + epsilonReal))/2.0;
-        outputSmaller = log((positiveWeightSum_ - positiveWeightSumLarger + epsilonReal)
+        outputSmaller = log((- - positiveWeightSumLarger + epsilonReal)
                             /(negativeWeightSum_ - negativeWeightSumLarger + epsilonReal))/2.0;
-    } else {
+    }
+    else if (boostingType_ == 3) {
+        outputLarger = (positiveWeightSumLarger * (1 - positiveWeightSumLargerRev)) - (negativeWeightSumLarger * (1 - negativeWeightSumLargerRev));
+        outputSmaller = ((positiveWeightSum_-positiveWeightSumLarger) * (1 - (positiveWeightSum_ - positiveWeightSumLargerRev ))) 
+        - ((negativeWeightSum_ - negativeWeightSumLarger) * (1 - (negativeWeightSum_-negativeWeightSumLargerRev)));
+    }
+
+    else {
         // Gentle AdaBoost
         outputLarger = weightLabelSumLarger/weightSumLarger;
         outputSmaller = (weightLabelSum_ - weightLabelSumLarger)/(weightSum_ - weightSumLarger);
@@ -312,7 +340,15 @@ double AdaBoost::computeError(const double positiveWeightSumLarger,
                 + (positiveWeightSum_ - positiveWeightSumLarger)*exp(-outputSmaller)
                 + negativeWeightSumLarger*exp(outputLarger)
                 + (negativeWeightSum_ - negativeWeightSumLarger)*exp(outputSmaller);
-    } else {
+    } 
+        else if (boostingType_ == 3) {
+        error = positiveWeightSumLarger*(1.0 - outputLarger)*(1.0 - outputLarger)
+                + (positiveWeightSum_ - positiveWeightSumLarger)*(1.0 - outputSmaller)*(1.0 - outputSmaller)
+                + negativeWeightSumLarger*(-1.0 - outputLarger)*(-1.0 - outputLarger)
+                + (negativeWeightSum_ - negativeWeightSumLarger)*(-1.0 - outputSmaller)*(-1.0 - outputSmaller);
+    }
+
+    else {
         // Gentle AdaBoost
         error = positiveWeightSumLarger*(1.0 - outputLarger)*(1.0 - outputLarger)
                 + (positiveWeightSum_ - positiveWeightSumLarger)*(1.0 - outputSmaller)*(1.0 - outputSmaller)
@@ -336,8 +372,11 @@ void AdaBoost::updateWeight(const AdaBoost::DecisionStump& bestClassifier) {
         } else {
             weights_[sampleIndex] = 1.0 / sampleTotal_;
         }
+
 #else
+
         weights_[sampleIndex] *= exp(-1.0*labelInteger*bestClassifier.evaluate(samples_[sampleIndex]));
+
 #endif
         updatedWeightSum += weights_[sampleIndex];
     }
