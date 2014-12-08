@@ -29,9 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ADABOOST_H
 
 /* enable algorithms. Comment to disable */
-//#define MADABOOST
 //#define FEATURE2
 //#define MADABOOST
+//#define LOGITBOOST
+#define ETABOOST
 #define EARLY_TERMINATION
 #include <string>
 #include <vector>
@@ -120,6 +121,9 @@ private:
 
 #ifdef MADABOOST
     std::vector<double> madaboostEvalValues_;
+
+#elif defined (ETABOOST)
+    std::vector<double> etaboostEvalValues_;
 #endif
 };
 
