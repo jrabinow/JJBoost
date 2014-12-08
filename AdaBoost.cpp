@@ -131,9 +131,6 @@ double AdaBoost::predict(const std::vector<double>& featureVector) const {
         score += weakClassifiers_[classifierIndex].evaluate(featureVector);
     }
 
-    /*std::cout << "--------------------------------------------" << std::endl;
-    std::cout << "SCORE: " << score << std::endl; */
-
     return score;
 }
 
@@ -150,6 +147,11 @@ void AdaBoost::initializeWeights() {
 #ifdef MADABOOST
     madaboostEvalValues_.resize(sampleTotal_);
     for (int i = 0; i < sampleTotal_; ++i) madaboostEvalValues_[i] = 1.0;
+
+#elif defined (ETABOOST)
+    etaboostEvalValues_.resize(sampleTotal_);
+    for (int i = 0; i < sampleTotal_; ++i) etaboostEvalValues_[i] = 1.0;
+
 #endif
 }
 
@@ -374,9 +376,19 @@ void AdaBoost::updateWeight(const AdaBoost::DecisionStump& bestClassifier) {
         } else {
             weights_[sampleIndex] = 1.0 / sampleTotal_;
         }
+#elif defined (LOGITBOOST)
+        weights_[sampleIndex] *= log(1+exp(2*(-1.0*labelInteger*bestClassifier.evaluate(samples_[sampleIndex]))));
 
+#elif defined (ETABOOST)
+        double n = .5;
+         etaboostEvalValues_[sampleIndex] *= exp(-1.0*labelInteger*bestClassifier.evaluate(samples_[sampleIndex]));
+        if (etaboostEvalValues_[sampleIndex] < 1){
+            weights_[sampleIndex] = (1/pow(n,2))*(((1-n)*(exp(etaboostEvalValues_[sampleIndex])-1))*n + 
+                ((2*n - 1) *(log(1+(exp(etaboostEvalValues_[sampleIndex]-1)*n)))));
+        } else {
+            weights_[sampleIndex] = 1.0 / sampleTotal_;
+        }           
 #else
-
         weights_[sampleIndex] *= exp(-1.0*labelInteger*bestClassifier.evaluate(samples_[sampleIndex]));
 
 #endif
