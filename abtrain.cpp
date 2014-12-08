@@ -72,7 +72,7 @@ ParameterABTrain parseCommandline(int argc, char* argv[]) {
                 ++argIndex;
                 if (argIndex >= argc) exitWithUsage();
                 int boostingType = atoi(argv[argIndex]);
-                if (boostingType < 0 || boostingType > 2) {
+                if (boostingType < 0) {
                     std::cerr << "error: invalid type of boosting" << std::endl;
                     exitWithUsage();
                 }
