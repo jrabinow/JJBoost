@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include <getopt>
+#include <getopt.h>
 #include "AdaBoost.h"
 
 struct ParameterABTrain {
@@ -61,7 +61,7 @@ ParameterABTrain parseCommandline(int argc, char* argv[]) {
     int c;
 
     // Options
-    while((c = getopt(argc, argv, "vt:r:")) != EOF) {
+    while((c = getopt(argc, argv, "vt:r:")) != -1) {
         switch (c) {
             case 'v':
                 parameters.verbose = true;
@@ -94,13 +94,14 @@ ParameterABTrain parseCommandline(int argc, char* argv[]) {
     }
 
     // Training data file
-    if (argc - optind <= 1)
+    if (argc - optind < 1)
 	    exitWithUsage();
     parameters.trainingDataFilename = argv[optind];
 
     // Model file
     ++optind;
-    if (argc - optind <= 0) parameters.outputModelFilename = parameters.trainingDataFilename + ".model";
+    if (argc - optind < 1)
+	    parameters.outputModelFilename = parameters.trainingDataFilename + ".model";
     else parameters.outputModelFilename = argv[optind];
 
     return parameters;

@@ -131,6 +131,9 @@ double AdaBoost::predict(const std::vector<double>& featureVector) const {
         score += weakClassifiers_[classifierIndex].evaluate(featureVector);
     }
 
+    /*std::cout << "--------------------------------------------" << std::endl;
+    std::cout << "SCORE: " << score << std::endl; */
+
     return score;
 }
 
