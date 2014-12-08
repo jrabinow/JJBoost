@@ -29,8 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ADABOOST_H
 
 /* enable algorithms. Comment to disable */
-#define MADABOOST
+//#define MADABOOST
 //#define FEATURE2
+//#define MADABOOST
+#define EARLY_TERMINATION
 #include <string>
 #include <vector>
 
@@ -38,37 +40,37 @@ class AdaBoost {
 public:
     AdaBoost(const int boostingType = 2)
         : boostingType_(boostingType), featureTotal_(0), sampleTotal_(0) {}
-    
+
     void setBoostingType(const int boostingType);
     void setTrainingSamples(const std::string& trainingDataFilename);
-    
+
     void train(const int roundTotal, const bool verbose = false);
-    
+
     double predict(const std::vector<double>& featureVector) const;
-    
+
     void writeFile(const std::string filename) const;
     void readFile(const std::string filename);
-    
+
 private:
     class DecisionStump {
     public:
         DecisionStump() : featureIndex_(-1), error_(-1) {}
-        
+
         void set(const int featureIndex,
                  const double threshold,
                  const double outputLarger,
                  const double outputSmaller,
                  const double error = -1);
-        
+
         double evaluate(const double featureValue) const;
         double evaluate(const std::vector<double>& featureVector) const;
-        
+
         int featureIndex() const { return featureIndex_; }
         double threshold() const { return threshold_; }
         double outputLarger() const { return outputLarger_; }
         double outputSmaller() const { return outputSmaller_; }
         double error() const { return error_; }
-        
+
     private:
         int featureIndex_;
         double threshold_;
@@ -76,7 +78,7 @@ private:
         double outputSmaller_;
         double error_;
     };
-    
+
     void initializeWeights();
     void sortSampleIndices();
     void trainRound();
@@ -99,7 +101,7 @@ private:
     int boostingType_;
     int featureTotal_;
     std::vector<DecisionStump> weakClassifiers_;
-    
+
     // Training samples
     int sampleTotal_;
     std::vector< std::vector<double> > samples_;
