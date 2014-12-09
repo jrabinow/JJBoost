@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
     ParameterABTrain parameters = parseCommandline(argc, argv);
 
     if (parameters.verbose) {
-        std::string boostingTypeName[3] = {"discrete", "real", "gentle"};
+        std::string boostingTypeName[4] = {"discrete", "real", "gentle", "modest"};
         std::cerr << std::endl;
         std::cerr << "Traing data:  " << parameters.trainingDataFilename << std::endl;
         std::cerr << "Output model: " << parameters.outputModelFilename << std::endl;
