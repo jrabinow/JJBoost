@@ -29,11 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ADABOOST_H
 
 /* enable algorithms. Comment to disable */
-//#define FEATURE2
 //#define MADABOOST
 //#define LOGITBOOST
-#define ETABOOST
+//#define ETABOOST
 #define EARLY_TERMINATION
+/* enable early termination during testing phase */
+#define EARLY_PREDICT
+/* enable early termmination during training phase */
+#define EARLY_TRAINING
 #include <string>
 #include <vector>
 
@@ -115,13 +118,15 @@ private:
     double weightLabelSum_;
     double positiveWeightSum_;
     double negativeWeightSum_;
+#ifdef EARLY_TERMINATION
+    unsigned positives, negatives;
+#endif
 
     //Other
     std::vector<double> rev_distr_;
 
 #ifdef MADABOOST
     std::vector<double> madaboostEvalValues_;
-
 #elif defined (ETABOOST)
     std::vector<double> etaboostEvalValues_;
 #endif

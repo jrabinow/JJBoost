@@ -80,8 +80,10 @@ void AdaBoost::setTrainingSamples(const std::string& trainingDataFilename) {
     featureTotal_ = static_cast<int>(samples_[0].size());
     initializeWeights();
     sortSampleIndices();
-
     weakClassifiers_.clear();
+#ifdef EARLY_TERMINATION
+    positives = negatives = 0;
+#endif
 }
 
 void AdaBoost::train(const int roundTotal, const bool verbose) {
@@ -97,7 +99,13 @@ void AdaBoost::train(const int roundTotal, const bool verbose) {
             std::cout << "error = " << weakClassifiers_[roundCount].error() << std::endl;
         }
     }
-
+#ifdef EARLY_TERMINATION
+    for(int sampleIndex = 0; sampleIndex < sampleTotal_; sampleIndex++)
+	    if(labels_[sampleIndex] > 0)
+		positives++;
+	    else
+		negatives++;
+#endif
     // Prediction test
     if (verbose) {
         int positiveTotal = 0;
@@ -107,21 +115,19 @@ void AdaBoost::train(const int roundTotal, const bool verbose) {
         for (int sampleIndex = 0; sampleIndex < sampleTotal_; ++sampleIndex) {
             double score = this->predict(samples_[sampleIndex]);
 
-            if (labels_[sampleIndex]) {
-                ++positiveTotal;
-                if (score > 0) ++positiveCorrectTotal;
-            } else {
-                ++negativeTotal;
-                if (score <= 0) ++negativeCorrectTotal;
+            if (labels_[sampleIndex] && score > 0) {
+                ++positiveCorrectTotal;
+            } else if( ! labels_[sampleIndex] && score <= 0) {
+                ++negativeCorrectTotal;
             }
         }
 
         std::cout << std::endl;
         std::cout << "Training set" << std::endl;
-        std::cout << "  positive: " << static_cast<double>(positiveCorrectTotal)/positiveTotal;
-        std::cout << " (" << positiveCorrectTotal << " / " << positiveTotal << "), ";
-        std::cout << "negative: " << static_cast<double>(negativeCorrectTotal)/negativeTotal;
-        std::cout << " (" << negativeCorrectTotal << " / " << negativeTotal << ")" << std::endl;;
+        std::cout << "  positive: " << static_cast<double>(positiveCorrectTotal)/positives;
+        std::cout << " (" << positiveCorrectTotal << " / " << positives << "), ";
+        std::cout << "negative: " << static_cast<double>(negativeCorrectTotal)/negatives;
+        std::cout << " (" << negativeCorrectTotal << " / " << negatives << ")" << std::endl;;
     }
 }
 
@@ -129,8 +135,13 @@ double AdaBoost::predict(const std::vector<double>& featureVector) const {
     double score = 0.0;
     for (int classifierIndex = 0; classifierIndex < static_cast<int>(weakClassifiers_.size()); ++classifierIndex) {
         score += weakClassifiers_[classifierIndex].evaluate(featureVector);
+#ifdef EARLY_TERMINATION
+	if(score > 1.0 - (double) positives / (double) sampleTotal_ ||
+			score < -1.0 + (double) negatives / (double) sampleTotal_) {
+		break;
+	}
+#endif
     }
-
     return score;
 }
 
@@ -147,11 +158,9 @@ void AdaBoost::initializeWeights() {
 #ifdef MADABOOST
     madaboostEvalValues_.resize(sampleTotal_);
     for (int i = 0; i < sampleTotal_; ++i) madaboostEvalValues_[i] = 1.0;
-
 #elif defined (ETABOOST)
     etaboostEvalValues_.resize(sampleTotal_);
     for (int i = 0; i < sampleTotal_; ++i) etaboostEvalValues_[i] = 1.0;
-
 #endif
 }
 
@@ -239,7 +248,6 @@ AdaBoost::DecisionStump AdaBoost::learnOptimalClassifier(const int featureIndex)
             weightLabelSumLarger += sampleWeight;
             negativeWeightSumLarger -= sampleWeight;
         }
-
         while (sortIndex < sampleTotal_ - 1
                && samples_[sampleIndex][featureIndex] == samples_[sortedSampleIndices_[featureIndex][sortIndex + 1]][featureIndex])
         {
@@ -256,10 +264,7 @@ AdaBoost::DecisionStump AdaBoost::learnOptimalClassifier(const int featureIndex)
                 weightLabelSumLarger += sampleWeight;
                 negativeWeightSumLarger -= sampleWeight;
                 negativeWeightSumLargerRev = negativeWeightSumLarger * rev_distr;
-            
             }
-
-
         }
         if (sortIndex >= sampleTotal_ - 1) break;
 
@@ -310,16 +315,15 @@ void AdaBoost::computeClassifierOutputs(const double weightSumLarger,
         // Real AdaBoost
         const double epsilonReal = 0.0001;
         outputLarger = log((positiveWeightSumLarger + epsilonReal)/(negativeWeightSumLarger + epsilonReal))/2.0;
+THIS IS INTENTIONALLY MADE TO PREVENT COMPILING
+Why are there 2 '-' on the next line?
         outputSmaller = log((- - positiveWeightSumLarger + epsilonReal)
                             /(negativeWeightSum_ - negativeWeightSumLarger + epsilonReal))/2.0;
-    }
-    else if (boostingType_ == 3) {
+    } else if (boostingType_ == 3) {
         outputLarger = (positiveWeightSumLarger * (1 - positiveWeightSumLargerRev)) - (negativeWeightSumLarger * (1 - negativeWeightSumLargerRev));
         outputSmaller = ((positiveWeightSum_-positiveWeightSumLarger) * (1 - (positiveWeightSum_ - positiveWeightSumLargerRev ))) 
         - ((negativeWeightSum_ - negativeWeightSumLarger) * (1 - (negativeWeightSum_-negativeWeightSumLargerRev)));
-    }
-
-    else {
+    } else {
         // Gentle AdaBoost
         outputLarger = weightLabelSumLarger/weightSumLarger;
         outputSmaller = (weightLabelSum_ - weightLabelSumLarger)/(weightSum_ - weightSumLarger);
@@ -344,15 +348,12 @@ double AdaBoost::computeError(const double positiveWeightSumLarger,
                 + (positiveWeightSum_ - positiveWeightSumLarger)*exp(-outputSmaller)
                 + negativeWeightSumLarger*exp(outputLarger)
                 + (negativeWeightSum_ - negativeWeightSumLarger)*exp(outputSmaller);
-    } 
-        else if (boostingType_ == 3) {
+    } else if (boostingType_ == 3) {
         error = positiveWeightSumLarger*(1.0 - outputLarger)*(1.0 - outputLarger)
                 + (positiveWeightSum_ - positiveWeightSumLarger)*(1.0 - outputSmaller)*(1.0 - outputSmaller)
                 + negativeWeightSumLarger*(-1.0 - outputLarger)*(-1.0 - outputLarger)
                 + (negativeWeightSum_ - negativeWeightSumLarger)*(-1.0 - outputSmaller)*(-1.0 - outputSmaller);
-    }
-
-    else {
+    } else {
         // Gentle AdaBoost
         error = positiveWeightSumLarger*(1.0 - outputLarger)*(1.0 - outputLarger)
                 + (positiveWeightSum_ - positiveWeightSumLarger)*(1.0 - outputSmaller)*(1.0 - outputSmaller)
@@ -390,7 +391,6 @@ void AdaBoost::updateWeight(const AdaBoost::DecisionStump& bestClassifier) {
         }           
 #else
         weights_[sampleIndex] *= exp(-1.0*labelInteger*bestClassifier.evaluate(samples_[sampleIndex]));
-
 #endif
         updatedWeightSum += weights_[sampleIndex];
     }
@@ -409,7 +409,11 @@ void AdaBoost::writeFile(const std::string filename) const {
     }
 
     int roundTotal = static_cast<int>(weakClassifiers_.size());
+#ifdef EARLY_TERMINATION
+    outputModelStream << roundTotal << " " << positives << " " << negatives << std::endl;
+#else
     outputModelStream << roundTotal << std::endl;
+#endif
     for (int roundIndex = 0; roundIndex < roundTotal; ++roundIndex) {
         outputModelStream << weakClassifiers_[roundIndex].featureIndex() << " ";
         outputModelStream << weakClassifiers_[roundIndex].threshold() << " ";
@@ -428,7 +432,14 @@ void AdaBoost::readFile(const std::string filename) {
     }
 
     int roundTotal;
+#ifdef EARLY_TERMINATION
     inputModelStream >> roundTotal;
+    inputModelStream >> positives;
+    inputModelStream >> negatives;
+    sampleTotal_ = positives + negatives;
+#else
+    inputModelStream >> roundTotal;
+#endif
     weakClassifiers_.resize(roundTotal);
     for (int roundIndex = 0; roundIndex < roundTotal; ++roundIndex) {
         int featureIndex;
