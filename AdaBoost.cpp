@@ -315,11 +315,11 @@ void AdaBoost::computeClassifierOutputs(const double weightSumLarger,
         // Real AdaBoost
         const double epsilonReal = 0.0001;
         outputLarger = log((positiveWeightSumLarger + epsilonReal)/(negativeWeightSumLarger + epsilonReal))/2.0;
-THIS IS INTENTIONALLY MADE TO PREVENT COMPILING
-Why are there 2 '-' on the next line?
-        outputSmaller = log((- - positiveWeightSumLarger + epsilonReal)
+        outputSmaller = log((positiveWeightSum_ - positiveWeightSumLarger + epsilonReal)
                             /(negativeWeightSum_ - negativeWeightSumLarger + epsilonReal))/2.0;
-    } else if (boostingType_ == 3) {
+    } 
+    // modest adaboost
+    else if (boostingType_ == 3) {
         outputLarger = (positiveWeightSumLarger * (1 - positiveWeightSumLargerRev)) - (negativeWeightSumLarger * (1 - negativeWeightSumLargerRev));
         outputSmaller = ((positiveWeightSum_-positiveWeightSumLarger) * (1 - (positiveWeightSum_ - positiveWeightSumLargerRev ))) 
         - ((negativeWeightSum_ - negativeWeightSumLarger) * (1 - (negativeWeightSum_-negativeWeightSumLargerRev)));
@@ -348,6 +348,7 @@ double AdaBoost::computeError(const double positiveWeightSumLarger,
                 + (positiveWeightSum_ - positiveWeightSumLarger)*exp(-outputSmaller)
                 + negativeWeightSumLarger*exp(outputLarger)
                 + (negativeWeightSum_ - negativeWeightSumLarger)*exp(outputSmaller);
+        // modest adaboost
     } else if (boostingType_ == 3) {
         error = positiveWeightSumLarger*(1.0 - outputLarger)*(1.0 - outputLarger)
                 + (positiveWeightSum_ - positiveWeightSumLarger)*(1.0 - outputSmaller)*(1.0 - outputSmaller)
