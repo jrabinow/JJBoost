@@ -383,8 +383,8 @@ void AdaBoost::updateWeight(const AdaBoost::DecisionStump& bestClassifier) {
         double n = .5;
          etaboostEvalValues_[sampleIndex] *= exp(-1.0*labelInteger*bestClassifier.evaluate(samples_[sampleIndex]));
         if (etaboostEvalValues_[sampleIndex] < 1){
-            weights_[sampleIndex] = (1/pow(n,2))*(((1-n)*(exp(etaboostEvalValues_[sampleIndex])-1))*n + 
-                ((2*n - 1) *(log(1+(exp(etaboostEvalValues_[sampleIndex]-1)*n)))));
+            weights_[sampleIndex] = (1/pow(n,2))*(((1-n)*(exp(etaboostEvalValues_[sampleIndex])-1)*n) + 
+                ((2*n - 1) *(log(1+((exp(etaboostEvalValues_[sampleIndex])-1)*n)))));
         } else {
             weights_[sampleIndex] = 1.0 / sampleTotal_;
         }           
