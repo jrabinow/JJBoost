@@ -36,10 +36,9 @@ int main(int argc, char *argv[])
 			if(size >= START_MEM && (size & (size - 1)) == 0) {
 				ngrams = (Ngram*) xrealloc(ngrams, (size << 1) * sizeof(Ngram));
 			}
-			ngrams[size].num_occurences = atoi(ptr);
+			ngrams[size].num_occurences = atoi(ptr + 1);
 			if(ngrams[size].num_occurences != 0) {
-				size++;
-				ngrams[size].data = line;
+				ngrams[size++].data = line;
 			} else
 				fprintf(stderr, "Error: invalid line '%s' (%d)\n", line, size);
 		} else
@@ -49,9 +48,9 @@ int main(int argc, char *argv[])
 	qsort(ngrams, size, sizeof(Ngram), (__compar_fn_t) &compare);
 
 	for(i = 0; i < size; i++) {
-		fprintf(output, "%s\n", ngrams->data);
-		printf("%s\n", ngrams->data);
-		free(ngrams->data);
+		fprintf(output, "%s\n", ngrams[i].data);
+		printf("%s\n", ngrams[i].data);
+		free(ngrams[i].data);
 	}
 	free(ngrams);
 	fclose(output);
