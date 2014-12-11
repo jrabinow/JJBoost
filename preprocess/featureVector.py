@@ -26,9 +26,9 @@ def extract(featureList, dir):
             tokens = tokenizer.tokenize(doc)
             for word in featureList:
                 if word in tokens:
-                    features[word] = 1
+                    features[word] = 1.0
                 else:
-                    features[word] = 0
+                    features[word] = 0.0
             docFeaturesPos[file] = features
 
     sentiment = "neg"
@@ -41,36 +41,36 @@ def extract(featureList, dir):
             tokens = tokenizer.tokenize(doc)
             for word in featureList:
                 if word in tokens:
-                    features[word] = 1
+                    features[word] = 1.0
                 else:
-                    features[word] = 0
+                    features[word] = 0.0
             docFeaturesNeg[doc] = features
 
     allData = []
 
-    count = 0
+    count = 1
     for doc in docFeaturesPos.keys():
         data =['+1']
         for key in featureList:
             data.append("%s:%s" %(count, docFeaturesPos[doc][key]))
             count +=1
-        count = 0
+        count = 1
         allData.append(" ".join(data))
 
-    count = 0
+    count = 1
     for doc in docFeaturesNeg.keys():
         data =['-1']
         for key in featureList:
             data.append("%s:%s" %(count, docFeaturesNeg[doc][key]))
             count +=1
-        count = 0
+        count = 1
         allData.append(" ".join(data))
 
     fVectorWriter = csv.writer(open(dir+"docs_train.txt", 'wb'))
     for d in allData:
         fVectorWriter.writerow([d])
 
-
+# 
 
 def extractFeatures(dir):
     docs = []         
@@ -98,7 +98,7 @@ def extractFeatures(dir):
     return tokens
 
 
-dir = "/Users/jasminehsu/Downloads/review_polarity/txt_sentoken/"
+dir = "/Users/jasminehsu/Downloads/review_polarity/test/"
 print "extracting feautres..."
 featuresRaw = extractFeatures(dir)
 print "cleaning features..."
@@ -111,5 +111,5 @@ for f in featuresClean:
 features = open(dir+"featureList.txt", 'rb')
 featuresList = features.read().split('\r\n')
 print "extracting features from documents..."
-extract(featuresList)
+extract(featuresList, dir)
 print "DONE."
