@@ -8,7 +8,7 @@ def main():
     featureSet1 = [ "MADABOOST", "ETABOOST", "LOGITBOOST", None ]
     featureSet2 = [ "EARLY_TERMINATION", None ]
     opts = list(range(2))
-    compileCmd = [ "make", "-j", "-f", "makefile" ]
+    compileCmd = [ "make", "-j", "-f", "Makefile" ]
     cleanCmd = ["make", "clean"]
     trainCmd = [ "./abtrain", "", "" ]
     predictCmd = [ "./abpredict", "", "" ]
@@ -29,7 +29,6 @@ def main():
             setEnvVariables(opts)
             # compile program
             output, retcode = launchPrgm(compileCmd, "stdout")
-            rawOutput(output, "stdout")
             if retcode == 0:
                 # select boosting type
                 for boostingName, boostingType in types.items():
