@@ -109,9 +109,7 @@ void AdaBoost::train(const int roundTotal, const bool verbose) {
 		negatives++;
     // Prediction test
     if (verbose) {
-        int positiveTotal = 0;
         int positiveCorrectTotal = 0;
-        int negativeTotal = 0;
         int negativeCorrectTotal = 0;
         for (int sampleIndex = 0; sampleIndex < sampleTotal_; ++sampleIndex) {
             double score = this->predict(samples_[sampleIndex]);
