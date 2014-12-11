@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	Ngram *ngrams = (Ngram*) xmalloc(START_MEM * sizeof(Ngram));
 
 	if(argc != 3) {
-		puts("Usage: prog FILENAME");
+		printf("Usage: %s FILENAME\n", argv[0]);
 		exit(0);
 	}
 	input = xfopen(argv[1], "r");

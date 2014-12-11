@@ -99,13 +99,14 @@ void AdaBoost::train(const int roundTotal, const bool verbose) {
             std::cout << "error = " << weakClassifiers_[roundCount].error() << std::endl;
         }
     }
-#ifdef EARLY_TERMINATION
+#ifndef EARLY_TERMINATION
+    int positives = 0, negatives = 0;
+#endif
     for(int sampleIndex = 0; sampleIndex < sampleTotal_; sampleIndex++)
 	    if(labels_[sampleIndex] > 0)
 		positives++;
 	    else
 		negatives++;
-#endif
     // Prediction test
     if (verbose) {
         int positiveTotal = 0;

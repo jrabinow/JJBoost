@@ -32,11 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define MADABOOST
 //#define LOGITBOOST
 //#define ETABOOST
-#define EARLY_TERMINATION
-/* enable early termination during testing phase */
-#define EARLY_PREDICT
-/* enable early termmination during training phase */
-#define EARLY_TRAINING
+//#define EARLY_TERMINATION
 #include <string>
 #include <vector>
 
