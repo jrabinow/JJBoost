@@ -23,12 +23,15 @@ int main(int argc, char *argv[])
 	int i, size = 0;
 	Ngram *ngrams = (Ngram*) xmalloc(START_MEM * sizeof(Ngram));
 
-	if(argc != 3) {
-		printf("Usage: %s FILENAME\n", argv[0]);
+	if(argc < 2) {
+		fprintf(stderr, "Usage: %s INPUT [OUTPUT]\n", argv[0]);
 		exit(0);
 	}
 	input = xfopen(argv[1], "r");
-	output = xfopen(argv[2], "w");
+	if(argv[2] == NULL)
+		output = stdout;
+	else
+		output = xfopen(argv[2], "w");
 
 	while((line = read_line(input)) != NULL) {
 		ptr = strrchr(line, ' ');
@@ -49,12 +52,11 @@ int main(int argc, char *argv[])
 
 	for(i = 0; i < size; i++) {
 		fprintf(output, "%s\n", ngrams[i].data);
-		printf("%s\n", ngrams[i].data);
 		free(ngrams[i].data);
 	}
 	free(ngrams);
 	fclose(output);
 
 	return 0;
-
 }
+
