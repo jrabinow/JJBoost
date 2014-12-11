@@ -18,6 +18,7 @@ def main():
     positivesRegex = re.compile("positive: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     negativesRegex = re.compile("negative: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
 
+    print("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams")
     # select feature 1
     for feature1 in featureSet1:
         opts[0] = feature1
@@ -53,9 +54,7 @@ def main():
                                 naccuracy = nresult.group(1)
                                 nsuccess = nresult.group(2)
                                 ntotal = nresult.group(3)
-                                print("ACCURACY = ", accuracy, "\tSUCCESS = ", success, "\tTOTAL = ", total)
-                                print("PACCURACY = ", paccuracy, "\tPSUCCESS = ", psuccess, "\tPTOTAL = ", ptotal)
-                                print("NACCURACY = ", naccuracy, "\tNSUCCESS = ", nsuccess, "\tPTOTAL = ", ntotal)
+                                print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ", \"FEATURE1=", feature1, "FEATURE2=", feature2, "BOOSTINGTYPE=", boostingName, "DATASET=", re.sub("train", "", dataset[0]), "\"")
                             else:
                                 print("PREDICTING FAILED!!!")
                                 rawOutput(output, "stdout")
