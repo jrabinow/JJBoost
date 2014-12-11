@@ -8,7 +8,7 @@ def main():
     featureSet1 = [ "MADABOOST", "ETABOOST", "LOGITBOOST", None ]
     featureSet2 = [ "EARLY_TERMINATION", None ]
     opts = list(range(2))
-    compileCmd = [ "make" ]
+    compileCmd = [ "make", "-j", "-f", "makefile" ]
     cleanCmd = ["make", "clean"]
     trainCmd = [ "./abtrain", "", "" ]
     predictCmd = [ "./abpredict", "", "" ]
@@ -17,6 +17,7 @@ def main():
     accuracyRegex = re.compile("Accuracy = ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     positivesRegex = re.compile("positive: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     negativesRegex = re.compile("negative: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
+    launchPrgm(cleanCmd, "stdout")
 
     print("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams")
     # select feature 1
@@ -28,6 +29,7 @@ def main():
             setEnvVariables(opts)
             # compile program
             output, retcode = launchPrgm(compileCmd, "stdout")
+            rawOutput(output, "stdout")
             if retcode == 0:
                 # select boosting type
                 for boostingName, boostingType in types.items():
@@ -54,7 +56,7 @@ def main():
                                 naccuracy = nresult.group(1)
                                 nsuccess = nresult.group(2)
                                 ntotal = nresult.group(3)
-                                print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ", \"FEATURE1=", feature1, "FEATURE2=", feature2, "BOOSTINGTYPE=", boostingName, "DATASET=", re.sub("train", "", dataset[0]), "\"")
+                                print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ", \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "\"")
                             else:
                                 print("PREDICTING FAILED!!!")
                                 rawOutput(output, "stdout")
@@ -71,11 +73,11 @@ def main():
 
 
 def setEnvVariables(options):
-    cflags = ""
+    cppflags = ""
     for opt in options:
         if opt is not None:
-            cflags += "-D" + opt
-    os.environ['CFLAGS'] = cflags
+            cppflags += "-D" + opt + " "
+    os.environ['CXXFLAGS'] = cppflags
 
 def argsToDataSets():
     datasets = list()
