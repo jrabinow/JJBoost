@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from errno import ENOENT, ENOMEM
-import sys,os,subprocess,re,time
+import sys,os,subprocess,re,time,getopt
 
 def main():
     types = {"discrete":"0", "real":"1", "gentle":"2", "modest":"3" }
@@ -12,14 +12,26 @@ def main():
     cleanCmd = ["make", "clean"]
     trainCmd = [ "./abtrain", "", "" ]
     predictCmd = [ "./abpredict", "", "" ]
+    outputFile = sys.stdout
 
-    datasets = argsToDataSets()
+    try:
+        optlist, args = getopt.getopt(sys.argv[1:], "o:")
+        for opt in optlist:
+            if opt[0] == '-o':
+                outputFile = open(opt[1], "w")
+    except getopt.GetoptError:
+        sys.stderr.write("Error parsing options.")
+        exit(-1)
+
+    datasets = argsToDataSets(args)
     accuracyRegex = re.compile("Accuracy = ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     positivesRegex = re.compile("positive: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     negativesRegex = re.compile("negative: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     launchPrgm(cleanCmd, "stdout")
 
-    print("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams")
+    outputFile.write("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams\n")
+    if outputFile is not sys.stdout:
+        print("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams")
     # select feature 1
     for feature1 in featureSet1:
         opts[0] = feature1
@@ -55,18 +67,20 @@ def main():
                                 naccuracy = nresult.group(1)
                                 nsuccess = nresult.group(2)
                                 ntotal = nresult.group(3)
-                                print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ", \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "\"")
+                                outputFile.write("{0},{1},{2},{3},{4},{5},{6},{7},{8}, \"FEATURE1={9} FEATURE2={10} BOOSTINGTYPE={11} DATASET={12}\"\n".format(accuracy, success, total, paccuracy, psuccess, ptotal, naccuracy, nsuccess, ntotal, feature1, feature2, boostingName, re.sub("train", "", dataset[0])))
+                                if outputFile is not sys.stdout:
+                                    print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ", \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "\"")
                             else:
-                                print("PREDICTING FAILED!!!")
+                                sys.stderr.write("PREDICTING FAILED!!!")
                                 rawOutput(output, "stdout")
                                 exit(-1)
                         else:
-                            print("TRAINING FAILED!!!")
+                            sys.stderr.write("TRAINING FAILED!!!")
                             rawOutput(output, "stdout")
                             exit(-1)
             else:
                 rawOutput(output, "stdout")
-                print("BUILD FAILED!!!")
+                sys.stderr.write("BUILD FAILED!!!")
                 exit(-1)
             launchPrgm(cleanCmd, "stdout")
 
@@ -78,15 +92,15 @@ def setEnvVariables(options):
             cppflags += "-D" + opt + " "
     os.environ['CXXFLAGS'] = cppflags
 
-def argsToDataSets():
+def argsToDataSets(args):
     datasets = list()
     files = list()
 
-    if len(sys.argv) < 2:
+    if len(args) < 1:
         print("Usage: ./gridsearch DATADIR")
         exit(0)
 
-    for path in sys.argv[1:]:
+    for path in args:
         for dirname, subdirList, fileList in os.walk(path):
             for fname in fileList:
                 files.append((fname, dirname + "/" + fname))
