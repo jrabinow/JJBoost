@@ -7,3 +7,4 @@ abtrain
 abpredict
 cscope.out
 TrainData/*.model
+webscraper/Datasets/*
