@@ -4,6 +4,7 @@ from nltk.corpus import stopwords
 from nltk import word_tokenize
 from nltk.tokenize import RegexpTokenizer
 from nltk.util import trigrams
+from nltk import FreqDist
 
 def removeStopwords(features):
     stop = stopwords.words('english')
@@ -11,7 +12,7 @@ def removeStopwords(features):
     return features 
 
 
-def extract(featureList, dir, fileout):
+def extract(featureList, dir, fileout, n):
     tokenizer = RegexpTokenizer(r'\w+')
 
     docFeaturesPos = {}
@@ -113,5 +114,5 @@ featuresTrigrams = trigrams(featuresClean)
 # featuresList = features.read().split('\r\n')
 featuresList = [t for t in featuresTrigrams]
 print "extracting features from documents..."
-extract(featuresList, dir, "docs_train_trigrams")
+extract(featuresList, dir, "docs_train_trigrams", 500)
 print "DONE."
