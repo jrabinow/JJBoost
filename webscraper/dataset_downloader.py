@@ -3,8 +3,8 @@ import urllib2
 from BeautifulSoup import BeautifulSoup
 import re
 
-# max file size 22MB
-maxFileSize = 1024*1024*22
+# max file size 23MB
+maxFileSize = 1024*1024*23
 
 def http_download(url):
     try:
