@@ -3,7 +3,7 @@ import nltk, re, pprint
 from nltk.corpus import stopwords 
 from nltk import word_tokenize
 from nltk.tokenize import RegexpTokenizer
-
+from nltk import FreqDist
 
 def removeStopwords(features):
     stop = stopwords.words('english')
@@ -11,7 +11,7 @@ def removeStopwords(features):
     return features 
 
 
-def extract(featureList, dir):
+def extract(featureList, dir,n):
     tokenizer = RegexpTokenizer(r'\w+')
 
     docFeaturesPos = {}
@@ -46,6 +46,9 @@ def extract(featureList, dir):
                     features[word] = 0.0
             docFeaturesNeg[doc] = features
 
+    f = FreqDist(featureList)
+    featureList = [x for (x,f) in f.items()[:n]]
+
     allData = []
 
     count = 1
@@ -70,7 +73,7 @@ def extract(featureList, dir):
     for d in allData:
         fVectorWriter.writerow([d])
 
-# 
+
 
 def extractFeatures(dir):
     docs = []         
@@ -98,7 +101,7 @@ def extractFeatures(dir):
     return tokens
 
 
-dir = "/Users/jasminehsu/Downloads/review_polarity/test/"
+dir = "C:/Users/jhsu/development/JJBoost/data/txt_sentoken/"
 print "extracting feautres..."
 featuresRaw = extractFeatures(dir)
 print "cleaning features..."
@@ -111,5 +114,5 @@ for f in featuresClean:
 features = open(dir+"featureList.txt", 'rb')
 featuresList = features.read().split('\r\n')
 print "extracting features from documents..."
-extract(featuresList, dir)
+extract(featuresList, dir,500)
 print "DONE."
