@@ -60,14 +60,17 @@ def main():
                                     accuracy = result.group(1)
                                     success = result.group(2)
                                     total = result.group(3)
-                                    presult = positivesRegex.search(string)
+                                presult = positivesRegex.search(string)
+                                if presult is not None:
                                     paccuracy = presult.group(1)
                                     psuccess = presult.group(2)
                                     ptotal = presult.group(3)
-                                    nresult = negativesRegex.search(string)
+                                nresult = negativesRegex.search(string)
+                                if nresult is not None:
                                     naccuracy = nresult.group(1)
                                     nsuccess = nresult.group(2)
                                     ntotal = nresult.group(3)
+                                if result is not None and presult is not None and nresult is not None:
                                     outputFile.write("{0},{1},{2},{3},{4},{5},{6},{7},{8}, \"FEATURE1={9} FEATURE2={10} BOOSTINGTYPE={11} DATASET={12}\"\n".format(accuracy, success, total, paccuracy, psuccess, ptotal, naccuracy, nsuccess, ntotal, feature1, feature2, boostingName, re.sub("train", "", dataset[0])))
                                     if outputFile is not sys.stdout:
                                         print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ", \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "\"")
