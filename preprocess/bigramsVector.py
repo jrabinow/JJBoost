@@ -45,7 +45,7 @@ def extract(featureList, dir, fileout):
                     features[word] = 1.0
                 else:
                     features[word] = 0.0
-            docFeaturesNeg[doc] = features
+            docFeaturesNeg[file] = features
     allData = []
 
     count = 1

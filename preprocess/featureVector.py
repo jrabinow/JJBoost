@@ -44,7 +44,7 @@ def extract(featureList, dir,n):
                     features[word] = 1.0
                 else:
                     features[word] = 0.0
-            docFeaturesNeg[doc] = features
+            docFeaturesNeg[file] = features
 
     f = FreqDist(featureList)
     featureList = [x for (x,f) in f.items()[:n]]
@@ -95,7 +95,6 @@ def extractFeatures(dir):
         if file.endswith(".txt"):
             fp = open(dir+sentiment+"/"+file, 'r')
             doc = fp.read()
-            #tokens.extend(word_tokenize(doc))
             tokens.extend(tokenizer.tokenize(doc))
             fp.close()
     return tokens
