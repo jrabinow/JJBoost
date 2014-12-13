@@ -14,9 +14,10 @@ def removeStopwords(features):
 
 def extract(featureList, dir, fileout, n):
     tokenizer = RegexpTokenizer(r'\w+')
+    docPos = {}
+    docNeg = {}
+    docFeatures = {}
 
-    docFeaturesPos = {}
-    docFeaturesNeg = {}
     sentiment = "pos"
     for file in os.listdir(dir+sentiment):
         if file.endswith(".txt"):
@@ -30,7 +31,8 @@ def extract(featureList, dir, fileout, n):
                     features[word] = 1.0
                 else:
                     features[word] = 0.0
-            docFeaturesPos[file] = features
+            docPos[file] = ""
+            docFeatures[file] = features
 
     sentiment = "neg"
     for file in os.listdir(dir+sentiment):
@@ -45,30 +47,35 @@ def extract(featureList, dir, fileout, n):
                     features[word] = 1.0
                 else:
                     features[word] = 0.0
-            docFeaturesNeg[file] = features
+            docNeg[file] = ""
+            docFeatures[file] = features
 
+    f = FreqDist(featureList)
+    featureList = [x for (x,f) in f.items()[:n]]
     allData = []
-
-    count = 1
-    for doc in docFeaturesPos.keys():
-        data =['+1']
-        for key in featureList:
-            data.append("%s:%s" %(count, docFeaturesPos[doc][key]))
-            count +=1
+    
+    for doc in docFeatures.keys():
+        data = []
         count = 1
-        allData.append(" ".join(data))
-
-    count = 1
-    for doc in docFeaturesNeg.keys():
-        data =['-1']
+        if doc in docNeg.keys():
+            val =['-1']
+        if doc in docPos.keys():
+            val =['1']
         for key in featureList:
-            data.append("%s:%s" %(count, docFeaturesNeg[doc][key]))
+            data.append("%s:%s" %(count, docFeatures[doc][key]))
             count +=1
-        count = 1
-        allData.append(" ".join(data))
-
+        val.extend(data)
+        allData.append(" ".join(val))
+    # for doc in docFeaturesPos.keys():
+    #     data =['+1']
+    #     for key in featureList:
+    #         data.append("%s:%s" %(count, docFeaturesPos[doc][key]))
+    #         count +=1
+    #     count = 1
+    #     allData.append(" ".join(data))
     fVectorWriter = csv.writer(open(dir+fileout+".txt", 'wb'))
     for d in allData:
+        print d
         fVectorWriter.writerow([d])
 
 # 
@@ -99,7 +106,7 @@ def extractFeatures(dir):
     return tokens
 
 
-dir = "/Users/jasminehsu/Downloads/review_polarity/test/"
+dir = "/home/jch550/dev/JJboost/data/txt_sentoken/"
 print "extracting features..."
 featuresRaw = extractFeatures(dir)
 # print "cleaning features..."
