@@ -11,7 +11,6 @@ def removeStopwords(features):
     features = [i for i in features if i not in stop]
     return features 
 
-
 def extract(featureList, dir, fileout,n):
     tokenizer = RegexpTokenizer(r'\w+')
 
@@ -34,8 +33,6 @@ def extract(featureList, dir, fileout,n):
             docPos[file] = ""
             docFeatures[file] = features
 
-
-
     sentiment = "neg"
     for file in os.listdir(dir+sentiment):
         if file.endswith(".txt"):
@@ -51,6 +48,8 @@ def extract(featureList, dir, fileout,n):
                     features[word] = 0.0
             docNeg[file] = ""
             docFeatures[file] = features
+    f = FreqDist(featureList)
+    featureList = [x for (x,f) in f.items()[:n]]
     allData = []
 
     for doc in docFeatures.keys():
@@ -104,17 +103,16 @@ def extractFeatures(dir):
             fp.close()
     return tokens
 
-
-dir = "C:/Users/jhsu/development/JJBoost/data/txt_sentoken/"
-print "extracting feautres..."
-featuresRaw = extractFeatures(dir)
-# print "cleaning features..."
-featuresClean = removeStopwords(featuresRaw)
-featuresBigrams = bigrams(featuresClean)
-# print "writing to file..."
-fListWriter = csv.writer(open(dir+"featureBigramsList.txt", 'w'))
-for f in featuresBigrams:
-    fListWriter.writerow([f])
+dir = "/home/jch550/dev/JJboost/data/txt_sentoken/"
+# print "extracting feautres..."
+# featuresRaw = extractFeatures(dir)
+# # print "cleaning features..."
+# featuresClean = removeStopwords(featuresRaw)
+# featuresBigrams = bigrams(featuresClean)
+# # print "writing to file..."
+# fListWriter = csv.writer(open(dir+"featureBigramsList.txt", 'w'))
+# for f in featuresBigrams:
+#     fListWriter.writerow([f])
 
 features = open(dir+"featureBigramsList.txt", 'rb')
 featuresList = features.read().split("\r\n")
