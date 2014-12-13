@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from errno import ENOENT, ENOMEM
-import sys,os,subprocess,re,time,getopt
+import sys,os,subprocess,re,time,getopt, _thread
 
 def run_on_dataset(trainCmd, predictCmd, dataset, outputFile, writeLock, feature1, feature2, boostingName, boostingType):
     accuracyRegex = re.compile("Accuracy = ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
