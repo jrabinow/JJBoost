@@ -24,11 +24,11 @@ def run_on_dataset(trainCmd, predictCmd, dataset, outputFile, writeLock, feature
     positivesRegex = re.compile("positive: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     negativesRegex = re.compile("negative: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     trainCmd[2] = dataset[0]
-    output, retcode = launchPrgm(trainCmd)
+    output, retcode, trainingTime = launchPrgm(trainCmd)
     if retcode == 0:
         predictCmd[1] = dataset[1]
         predictCmd[2] = dataset[0] + ".model"
-        output, retcode = launchPrgm(predictCmd)
+        output, retcode, predictTime = launchPrgm(predictCmd)
         if retcode == 0:
             string = str(output[0])[1:].strip("'").replace("\\n", "\n")
             result = accuracyRegex.search(string)
@@ -48,17 +48,17 @@ def run_on_dataset(trainCmd, predictCmd, dataset, outputFile, writeLock, feature
                 ntotal = nresult.group(3)
             if result is not None and presult is not None and nresult is not None:
                 writeLock.acquire()
-                outputFile.write("{0},{1},{2},{3},{4},{5},{6},{7},{8}, \"FEATURE1={9} FEATURE2={10} BOOSTINGTYPE={11} DATASET={12}\"\n".format(accuracy, success, total, paccuracy, psuccess, ptotal, naccuracy, nsuccess, ntotal, feature1, feature2, boostingName, re.sub("train", "", dataset[0])))
+                outputFile.write("{0},{1},{2},{3},{4},{5},{6},{7},{8}, {9}, {10}, {11}, \"FEATURE1={12} FEATURE2={13} BOOSTINGTYPE={14} DATASET={15}\"\n".format(accuracy, success, total, paccuracy, psuccess, ptotal, naccuracy, nsuccess, ntotal, trainingTime, predictTime, trainingTime + predictTime, feature1, feature2, boostingName, re.sub("train", "", dataset[0])))
                 writeLock.release()
                 if outputFile is not sys.stdout:
-                    print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ", \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "\"")
+                    print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ",", trainingTime, predictTime, trainingTime + predictTime, ",\"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "\"")
             else:
                 sys.stderr.write("ERROR PARSING OUTPUT!!!\n")
                 writeLock.acquire()
-                outputFile.write("0,0,0,0,0,0,0,0,0, \"FEATURE1={0} FEATURE2={1} BOOSTINGTYPE={2} DATASET={3} STATUS=FAIL\"\n".format(feature1, feature2, boostingName, re.sub("train", "", dataset[0])))
+                outputFile.write("0,0,0,0,0,0,0,0,0,0,0,0, \"FEATURE1={0} FEATURE2={1} BOOSTINGTYPE={2} DATASET={3} STATUS=FAIL\"\n".format(feature1, feature2, boostingName, re.sub("train", "", dataset[0])))
                 writeLock.release()
                 if outputFile is not sys.stdout:
-                    print("0,0,0,0,0,0,0,0,0, \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "STATUS=FAIL\"")
+                    print("0,0,0,0,0,0,0,0,0,0,0,0, \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "STATUS=FAIL\"")
         else:
             sys.stderr.write("PREDICTING FAILED!!!\n")
             rawOutput(output, "stdout")
@@ -93,9 +93,9 @@ def main():
     datasets = argsToDataSets(args)
     writeLock = threading.Lock()
 
-    outputFile.write("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams\n")
+    outputFile.write("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,traningTime,predictTime,totalTime,BoostParams\n")
     if outputFile is not sys.stdout:
-        print("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams")
+        print("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,trainingTime,predictTime,totalTime,BoostParams")
     # select feature 1
     for feature1 in featureSet1:
         opts[0] = feature1
@@ -105,7 +105,7 @@ def main():
             setEnvVariables(opts)
             # compile program
             launchPrgm(cleanCmd)
-            output, retcode = launchPrgm(compileCmd)
+            output, retcode,compileTime = launchPrgm(compileCmd)
             if retcode == 0:
                 # select boosting type
                 for boostingName, boostingType in types.items():
@@ -145,6 +145,7 @@ def argsToDataSets(args):
             for fname in fileList:
                 files.append((fname, dirname + "/" + fname))
     files.sort()
+
     for i in range(len(files) - 1):
         if re.sub("test|train", "", files[i][0]) == re.sub("test|train", "", files[i+1][0]):
             if "train" in files[i][0] and "test" in files[i+1][0]:
@@ -157,6 +158,7 @@ def argsToDataSets(args):
 def launchPrgm(launchArgs):
     outputLocal = None        # Have to declare variables here to humor python...
     retCodeLocal = ENOENT     # error code: invalid path
+    startTime = time.time()
     try:
         proc = subprocess.Popen(launchArgs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
        # non-blocking function.
@@ -173,7 +175,8 @@ def launchPrgm(launchArgs):
     except KeyboardInterrupt:
         terminateProcess(proc, "Error: program execution was interrupted by user.\n")
         exit(-1)
-    return (outputLocal, retCodeLocal)
+    processTime = time.time() - startTime
+    return (outputLocal, retCodeLocal, processTime)
 
 
 
