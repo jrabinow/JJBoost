@@ -8,11 +8,11 @@ def run_on_dataset(trainCmd, predictCmd, dataset, outputFile, writeLock, feature
     positivesRegex = re.compile("positive: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     negativesRegex = re.compile("negative: ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
     trainCmd[2] = dataset[0]
-    output, retcode = launchPrgm(trainCmd, "stdout")
+    output, retcode = launchPrgm(trainCmd)
     if retcode == 0:
         predictCmd[1] = dataset[1]
         predictCmd[2] = dataset[0] + ".model"
-        output, retcode = launchPrgm(predictCmd, "stdout")
+        output, retcode = launchPrgm(predictCmd)
         if retcode == 0:
             string = str(output[0])[1:].strip("'").replace("\\n", "\n")
             result = accuracyRegex.search(string)
@@ -37,18 +37,18 @@ def run_on_dataset(trainCmd, predictCmd, dataset, outputFile, writeLock, feature
                 if outputFile is not sys.stdout:
                     print(accuracy, ",", success, ",", total, ",", paccuracy, ",", psuccess, ", ", ptotal, ",", naccuracy, ",", nsuccess, ",", ntotal, ", \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "\"")
             else:
-                sys.stderr.write("ERROR PARSING OUTPUT!!!")
+                sys.stderr.write("ERROR PARSING OUTPUT!!!\n")
                 writeLock.acquire()
                 outputFile.write("0,0,0,0,0,0,0,0,0, \"FEATURE1={0} FEATURE2={1} BOOSTINGTYPE={2} DATASET={3} STATUS=FAIL\"\n".format(feature1, feature2, boostingName, re.sub("train", "", dataset[0])))
                 writeLock.release()
                 if outputFile is not sys.stdout:
                     print("0,0,0,0,0,0,0,0,0, \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "STATUS=FAIL\"")
         else:
-            sys.stderr.write("PREDICTING FAILED!!!")
+            sys.stderr.write("PREDICTING FAILED!!!\n")
             rawoutput(output, "stdout")
             exit(-1)
     else:
-        sys.stderr.write("TRAINING FAILED!!!")
+        sys.stderr.write("TRAINING FAILED!!!\n")
         rawOutput(output, "stdout")
         exit(-1)
     
@@ -70,10 +70,11 @@ def main():
             if opt[0] == '-o':
                 outputFile = open(opt[1], "w")
     except getopt.GetoptError:
-        sys.stderr.write("Error parsing options.")
+        sys.stderr.write("Error parsing options.\n")
         exit(-1)
 
     datasets = argsToDataSets(args)
+    writeLock = _thread.allocate_lock()
 
     outputFile.write("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams\n")
     if outputFile is not sys.stdout:
@@ -86,8 +87,8 @@ def main():
             opts[1] = feature2
             setEnvVariables(opts)
             # compile program
-            launchPrgm(cleanCmd, "stdout")
-            output, retcode = launchPrgm(compileCmd, "stdout")
+            launchPrgm(cleanCmd)
+            output, retcode = launchPrgm(compileCmd)
             if retcode == 0:
                 # select boosting type
                 for boostingName, boostingType in types.items():
@@ -95,14 +96,14 @@ def main():
                     # run on all datasets
                     for dataset in datasets:
                         try:
-               	            thread.start_new_thread(run_on_dataset, (trainCmd, predictCmd, dataset, outputFile, writeLock, feature1, feature2, boostingName, boostingType))
+               	            _thread.start_new_thread(run_on_dataset, (trainCmd, predictCmd, dataset, outputFile, writeLock, feature1, feature2, boostingName, boostingType))
                         except:
-                            sys.stderr.write("FAILED LAUNCHING THREAD!!! {0},{1},{2},{3}".format(feature1, feature2, boostingName, dataset[1]))
+                           sys.stderr.write("FAILED LAUNCHING THREAD!!! {0},{1},{2},{3}\n".format(feature1, feature2, boostingName, dataset[1]))
             else:
-                sys.stderr.write("BUILD FAILED!!! {0},{1}".format(feature1, feature2))
+                sys.stderr.write("BUILD FAILED!!! {0},{1}\n".format(feature1, feature2))
                 rawOutput(output, "stdout")
                 exit(-1)
-            launchPrgm(cleanCmd, "stdout")
+            launchPrgm(cleanCmd)
 
 def setEnvVariables(options):
     cppflags = ""
