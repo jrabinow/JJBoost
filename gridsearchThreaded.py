@@ -1,7 +1,23 @@
 #!/usr/bin/env python3
 
 from errno import ENOENT, ENOMEM
-import sys,os,subprocess,re,time,getopt, _thread
+import sys,os,subprocess,re,time,getopt, threading
+
+class myThread(threading.Thread):
+    def __init__(self, trainCmd, predictCmd, dataset, feature1, feature2, boostingName, boostingType, outputFile, writeLock):
+        threading.Thread.__init__(self)
+        self.trainCmd = trainCmd
+        self.predictCmd = predictCmd
+        self.dataset = dataset
+        self.feature1 = feature1
+        self.feature2 = feature2
+        self.boostingName = boostingName
+        self.boostingType = boostingType
+        self.outputFile = outputFile
+        self.writeLock = writeLock
+    
+    def run(self):
+        run_on_dataset(self.trainCmd, self.predictCmd, self.dataset, self.outputFile, self.writeLock, self.feature1, self.feature2, self.boostingName, self.boostingType)
 
 def run_on_dataset(trainCmd, predictCmd, dataset, outputFile, writeLock, feature1, feature2, boostingName, boostingType):
     accuracyRegex = re.compile("Accuracy = ([0-9.]+) \(([0-9]+) / ([0-9]+)\)")
@@ -73,8 +89,9 @@ def main():
         sys.stderr.write("Error parsing options.\n")
         exit(-1)
 
+    threadpool = list()
     datasets = argsToDataSets(args)
-    writeLock = _thread.allocate_lock()
+    writeLock = threading.Lock()
 
     outputFile.write("Accuracy,Success,Total,PositiveAccuracy,PositiveSuccess,PositiveTotal,NegativeAccuracy,NegativeSuccess,NegativeTotal,BoostParams\n")
     if outputFile is not sys.stdout:
@@ -95,10 +112,15 @@ def main():
                     trainCmd[1] = "-t" + boostingType
                     # run on all datasets
                     for dataset in datasets:
+                        newthread = myThread(trainCmd, predictCmd, dataset, feature1, feature2, boostingName, boostingType, outputFile, writeLock)
                         try:
-               	            _thread.start_new_thread(run_on_dataset, (trainCmd, predictCmd, dataset, outputFile, writeLock, feature1, feature2, boostingName, boostingType))
+                            newthread.start()
                         except:
                            sys.stderr.write("FAILED LAUNCHING THREAD!!! {0},{1},{2},{3}\n".format(feature1, feature2, boostingName, dataset[1]))
+                        threadpool.append(newthread) 
+                    time.sleep(1)
+                    for t in threadpool:
+                        t.join()
             else:
                 sys.stderr.write("BUILD FAILED!!! {0},{1}\n".format(feature1, feature2))
                 rawOutput(output, "stdout")
