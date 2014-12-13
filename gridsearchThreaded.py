@@ -61,7 +61,7 @@ def run_on_dataset(trainCmd, predictCmd, dataset, outputFile, writeLock, feature
                     print("0,0,0,0,0,0,0,0,0, \"FEATURE1 =", feature1, "FEATURE2 =", feature2, "BOOSTINGTYPE =", boostingName, "DATASET =", re.sub("train", "", dataset[0]), "STATUS=FAIL\"")
         else:
             sys.stderr.write("PREDICTING FAILED!!!\n")
-            rawoutput(output, "stdout")
+            rawOutput(output, "stdout")
             exit(-1)
     else:
         sys.stderr.write("TRAINING FAILED!!!\n")
@@ -118,9 +118,8 @@ def main():
                         except:
                            sys.stderr.write("FAILED LAUNCHING THREAD!!! {0},{1},{2},{3}\n".format(feature1, feature2, boostingName, dataset[1]))
                         threadpool.append(newthread) 
-                    time.sleep(1)
-                    for t in threadpool:
-                        t.join()
+                for t in threadpool:
+                    t.join()
             else:
                 sys.stderr.write("BUILD FAILED!!! {0},{1}\n".format(feature1, feature2))
                 rawOutput(output, "stdout")
