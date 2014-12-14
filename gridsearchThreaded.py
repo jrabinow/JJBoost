@@ -118,8 +118,8 @@ def main():
                         except:
                            sys.stderr.write("FAILED LAUNCHING THREAD!!! {0},{1},{2},{3}\n".format(feature1, feature2, boostingName, dataset[1]))
                         threadpool.append(newthread) 
-                for t in threadpool:
-                    t.join()
+                    for t in threadpool:
+                        t.join()
             else:
                 sys.stderr.write("BUILD FAILED!!! {0},{1}\n".format(feature1, feature2))
                 rawOutput(output, "stdout")
