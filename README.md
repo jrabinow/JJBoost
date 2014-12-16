@@ -4,7 +4,7 @@ JJBoost
 Final project for Foundations of Machine Learning class.
 NYU, Mehryar Mohri, Fall 2014
 
-Jasmine Feng
+Jasmine Hsu
 Julien Rabinow
 
 Original README.md from AdaBoost C++ code:
